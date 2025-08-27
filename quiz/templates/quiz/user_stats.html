@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Statistics - Quiz Master Pro{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+            <i class="fas fa-chart-bar text-primary-600 mr-3"></i>
+            My Statistics
+        </h1>
+        <p class="text-xl text-gray-600">Track your quiz performance and progress</p>
+    </div>
+
+    <!-- Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-play text-blue-600 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Total Quizzes</h3>
+            <p class="text-3xl font-bold text-blue-600">{{ total_sessions }}</p>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-percentage text-green-600 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Average Score</h3>
+            <p class="text-3xl font-bold text-green-600">{{ avg_score }}%</p>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-trophy text-yellow-600 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Best Score</h3>
+            <p class="text-3xl font-bold text-yellow-600">{{ best_score }}%</p>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-purple-600 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Questions Answered</h3>
+            <p class="text-3xl font-bold text-purple-600">{{ total_questions_answered }}</p>
+        </div>
+    </div>
+
+    <!-- Category Performance -->
+    {% if category_performance %}
+    <div class="bg-white rounded-2xl shadow-xl p-8 mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-chart-pie text-primary-600 mr-3"></i>
+            Category Performance
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for category, stats in category_performance.items %}
+            <div class="bg-gray-50 rounded-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-gray-900">{{ category }}</h3>
+                    <span class="text-2xl font-bold {% if stats.percentage >= 80 %}text-green-600{% elif stats.percentage >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                        {{ stats.percentage }}%
+                    </span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 mb-3">
+                    <div class="{% if stats.percentage >= 80 %}bg-green-500{% elif stats.percentage >= 60 %}bg-yellow-500{% else %}bg-red-500{% endif %} h-3 rounded-full transition-all duration-500" 
+                         style="width: {{ stats.percentage }}%"></div>
+                </div>
+                <div class="flex justify-between text-sm text-gray-600">
+                    <span>{{ stats.sessions }} quiz{{ stats.sessions|pluralize }}</span>
+                    <span>{{ stats.total_score }}/{{ stats.total_questions }} correct</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Recent Quiz History -->
+    {% if user_sessions %}
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-history text-primary-600 mr-3"></i>
+            Recent Quiz History
+        </h2>
+        <div class="space-y-4">
+            {% for session in user_sessions %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center
+                        {% if session.get_percentage >= 80 %}bg-green-100
+                        {% elif session.get_percentage >= 60 %}bg-yellow-100
+                        {% else %}bg-red-100{% endif %}">
+                        {% if session.category %}
+                            <span class="text-xl">{{ session.category.icon }}</span>
+                        {% else %}
+                            <i class="fas fa-random text-primary-600"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="font-semibold text-gray-900">
+                            {% if session.category %}{{ session.category.name }}{% else %}Mixed Quiz{% endif %}
+                        </div>
+                        <div class="text-sm text-gray-600">{{ session.started_at|date:"M d, Y H:i" }}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xl font-bold {% if session.get_percentage >= 80 %}text-green-600{% elif session.get_percentage >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                        {{ session.get_percentage }}%
+                    </div>
+                    <div class="text-sm text-gray-600">{{ session.score }}/{{ session.total_questions }}</div>
+                </div>
+                <div class="flex space-x-2">
+                    <a href="{% url 'quiz:quiz_results' session.id %}" 
+                       class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                        View Results
+                    </a>
+                    <span class="text-gray-300">|</span>
+                    <a href="{% url 'quiz:revision_mode' session.id %}" 
+                       class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                        Review
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-xl p-8 text-center">
+        <i class="fas fa-chart-bar text-gray-300 text-6xl mb-4"></i>
+        <h3 class="text-xl font-semibold text-gray-600 mb-2">No quiz history yet!</h3>
+        <p class="text-gray-500 mb-6">Start taking quizzes to see your statistics and track your progress.</p>
+        <a href="{% url 'quiz:home' %}" 
+           class="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold">
+            Take Your First Quiz
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

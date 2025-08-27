@@ -1,0 +1,9 @@
+{
+  "scripts":{
+  "dev": "npx @tailwindcss/cli -i ./quizsite/static/src/css/input.css -o ./quizsite/static/src/css/output.css --watch"
+},
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.12",
+    "tailwindcss": "^4.1.12"
+  }
+}

@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Question {{ current_question_number }} - Quiz Master Pro{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+        <!-- Progress Header -->
+        <div class="bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-4 text-white">
+            <div class="flex justify-between items-center mb-3">
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm font-medium opacity-90">
+                        {% if session.category %}
+                            {{ session.category.icon }} {{ session.category.name }}
+                        {% else %}
+                            🎯 Mixed Quiz
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm font-medium opacity-90">Question {{ current_question_number }} of {{ total_questions }}</span>
+                    <div id="timer" class="bg-black bg-opacity-20 px-3 py-1 rounded-full text-sm font-bold">
+                        <i class="fas fa-clock mr-1"></i><span id="time-remaining">30</span>s
+                    </div>
+                </div>
+            </div>
+            <div class="w-full bg-white bg-opacity-20 rounded-full h-3">
+                <div class="bg-red-600 h-3 rounded-full transition-all duration-500 ease-out" 
+                     style="width: {{ progress_percentage }}%"></div>
+            </div>
+        </div>
+
+        <!-- Question Content -->
+        <div class="p-8">
+            <div class="mb-8">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-900 leading-relaxed mb-4">
+                    {{ question.question_text }}
+                </h2>
+                {% if question.difficulty_level %}
+                <div class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                    {% if question.difficulty_level == 'easy' %}bg-green-100 text-green-800
+                    {% elif question.difficulty_level == 'medium' %}bg-yellow-100 text-yellow-800
+                    {% else %}bg-red-100 text-red-800{% endif %}">
+                    <i class="fas fa-star mr-1"></i>{{ question.difficulty_level|title }}
+                </div>
+                {% endif %}
+            </div>
+
+            <form id="quiz-form" class="space-y-4">
+                {% csrf_token %}
+                <input type="hidden" id="session-id" value="{{ session.id }}">
+                <input type="hidden" id="question-id" value="{{ question.id }}">
+                
+                <div class="grid gap-4">
+                    <label class="option-label cursor-pointer group" data-option="A">
+                        <input type="radio" name="answer" value="A" class="sr-only">
+                        <div class="option-card flex items-center p-6 border-2 border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 group-hover:shadow-md">
+                            <div class="option-letter w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-600 mr-4 group-hover:bg-primary-500 group-hover:text-white transition-all duration-200">A</div>
+                            <span class="text-lg font-medium text-gray-800">{{ question.option_a }}</span>
+                        </div>
+                    </label>
+
+                    <label class="option-label cursor-pointer group" data-option="B">
+                        <input type="radio" name="answer" value="B" class="sr-only">
+                        <div class="option-card flex items-center p-6 border-2 border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 group-hover:shadow-md">
+                            <div class="option-letter w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-600 mr-4 group-hover:bg-primary-500 group-hover:text-white transition-all duration-200">B</div>
+                            <span class="text-lg font-medium text-gray-800">{{ question.option_b }}</span>
+                        </div>
+                    </label>
+
+                    <label class="option-label cursor-pointer group" data-option="C">
+                        <input type="radio" name="answer" value="C" class="sr-only">
+                        <div class="option-card flex items-center p-6 border-2 border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 group-hover:shadow-md">
+                            <div class="option-letter w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-600 mr-4 group-hover:bg-primary-500 group-hover:text-white transition-all duration-200">C</div>
+                            <span class="text-lg font-medium text-gray-800">{{ question.option_c }}</span>
+                        </div>
+                    </label>
+
+                    <label class="option-label cursor-pointer group" data-option="D">
+                        <input type="radio" name="answer" value="D" class="sr-only">
+                        <div class="option-card flex items-center p-6 border-2 border-gray-200 rounded-xl hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 group-hover:shadow-md">
+                            <div class="option-letter w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-600 mr-4 group-hover:bg-primary-500 group-hover:text-white transition-all duration-200">D</div>
+                            <span class="text-lg font-medium text-gray-800">{{ question.option_d }}</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="pt-6">
+                    <button type="submit" id="submit-btn" 
+                            class="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-black font-bold py-4 px-8 rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
+                            disabled>
+                        <i class="fas fa-check mr-2"></i>Submit Answer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Feedback Modal -->
+<div id="feedback-modal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all duration-300 scale-95">
+        <div id="feedback-content" class="p-8 text-center">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('quiz-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const options = document.querySelectorAll('input[name="answer"]');
+    const optionLabels = document.querySelectorAll('.option-label');
+    const modal = document.getElementById('feedback-modal');
+    const timerElement = document.getElementById('time-remaining');
+    
+    let timeRemaining = {{ time_remaining|default:30|safe }};
+    let timerInterval;
+    let startTime = Date.now();
+    
+    // Start timer
+    function startTimer() {
+        timerInterval = setInterval(function() {
+            timeRemaining--;
+            timerElement.textContent = timeRemaining;
+            
+            if (timeRemaining <= 10) {
+                timerElement.parentElement.classList.add('bg-red-500', 'text-white');
+                timerElement.parentElement.classList.remove('bg-white', 'bg-opacity-20');
+            }
+            
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                // Auto-submit with no answer
+                submitAnswer(null);
+            }
+        }, 1000);
+    }
+    
+    startTimer();
+    
+    // Handle option selection
+    options.forEach((option, index) => {
+        option.addEventListener('change', function() {
+            submitBtn.disabled = false;
+            
+            // Update visual selection
+            optionLabels.forEach(label => {
+                const card = label.querySelector('.option-card');
+                const letter = label.querySelector('.option-letter');
+                card.classList.remove('border-primary-500', 'bg-primary-100');
+                card.classList.add('border-gray-200');
+                letter.classList.remove('bg-primary-500', 'text-white');
+                letter.classList.add('bg-gray-100', 'text-gray-600');
+            });
+            
+            const selectedLabel = this.closest('.option-label');
+            const selectedCard = selectedLabel.querySelector('.option-card');
+            const selectedLetter = selectedLabel.querySelector('.option-letter');
+            selectedCard.classList.remove('border-gray-200');
+            selectedCard.classList.add('border-primary-500', 'bg-primary-100');
+            selectedLetter.classList.remove('bg-gray-100', 'text-gray-600');
+            selectedLetter.classList.add('bg-primary-500', 'text-white');
+        });
+    });
+    
+    // Handle form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+        const answer = selectedAnswer ? selectedAnswer.value : null;
+        
+        submitAnswer(answer);
+    });
+    
+    function submitAnswer(answer) {
+        clearInterval(timerInterval);
+        
+        const timeTaken = Math.round((Date.now() - startTime) / 1000);
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+        
+        // Disable all options
+        optionLabels.forEach(label => {
+            label.style.pointerEvents = 'none';
+        });
+        
+        fetch('{% url "quiz:submit_answer" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                session_id: document.getElementById('session-id').value,
+                question_id: document.getElementById('question-id').value,
+                selected_answer: answer,
+                time_taken: timeTaken
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showFeedback(data.is_correct, data.correct_answer, data.explanation, answer);
+            } else {
+                alert('Error submitting answer. Please try again.');
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Network error. Please check your connection and try again.');
+            location.reload();
+        });
+    }
+    
+    function showFeedback(isCorrect, correctAnswer, explanation, userAnswer) {
+        const feedbackContent = document.getElementById('feedback-content');
+        
+        if (isCorrect) {
+            feedbackContent.innerHTML = `
+                <div class="text-green-600 text-6xl mb-4 animate-bounce-in">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-green-800 mb-3">Correct!</h3>
+                <p class="text-gray-600 mb-6">Great job! You got it right.</p>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 text-left">
+                    <p class="text-green-800 text-sm"><strong>Explanation:</strong> ${explanation}</p>
+                </div>
+                <button onclick="nextQuestion()" class="bg-green-600 text-white px-8 py-3 rounded-xl hover:bg-green-700 transition-colors font-semibold">
+                    <i class="fas fa-arrow-right mr-2"></i>Continue
+                </button>
+            `;
+        } else {
+            const timeoutMessage = userAnswer === null ? '<p class="text-red-600 mb-2"><i class="fas fa-clock mr-1"></i>Time\'s up!</p>' : '';
+            const userAnswerMessage = userAnswer ? `<p class="text-gray-600 mb-2">Your answer: Option ${userAnswer}</p>` : '';
+            
+            feedbackContent.innerHTML = `
+                <div class="text-red-600 text-6xl mb-4 animate-bounce-in">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-red-800 mb-3">Incorrect</h3>
+                ${timeoutMessage}
+                ${userAnswerMessage}
+                <p class="text-gray-600 mb-2">The correct answer was Option ${correctAnswer}.</p>
+                <p class="text-gray-500 mb-6">Don't worry, keep trying!</p>
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
+                    <p class="text-red-800 text-sm"><strong>Explanation:</strong> ${explanation}</p>
+                </div>
+                <button onclick="nextQuestion()" class="bg-red-600 text-white px-8 py-3 rounded-xl hover:bg-red-700 transition-colors font-semibold">
+                    <i class="fas fa-arrow-right mr-2"></i>Continue
+                </button>
+            `;
+        }
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            modal.querySelector('.bg-white').classList.remove('scale-95');
+            modal.querySelector('.bg-white').classList.add('scale-100');
+        }, 10);
+    }
+    
+    window.nextQuestion = function() {
+        window.location.href = '{% url "quiz:quiz_question" session.id %}';
+    };
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.key >= '1' && e.key <= '4') {
+            const optionIndex = parseInt(e.key) - 1;
+            const optionValues = ['A', 'B', 'C', 'D'];
+            const option = document.querySelector(`input[value="${optionValues[optionIndex]}"]`);
+            if (option && !submitBtn.disabled) {
+                option.checked = true;
+                option.dispatchEvent(new Event('change'));
+            }
+        } else if (e.key === 'Enter' && !submitBtn.disabled) {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (selectedAnswer) {
+                form.dispatchEvent(new Event('submit'));
+            }
+        }
+    });
+    
+    // Cleanup timer on page unload
+    window.addEventListener('beforeunload', function() {
+        if (timerInterval) {
+            clearInterval(timerInterval);
+        }
+    });
+});
+</script>
+{% endblock %}

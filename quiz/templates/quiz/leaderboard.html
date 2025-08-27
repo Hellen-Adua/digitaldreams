@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Leaderboard - Quiz Master Pro{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4 flex items-center justify-center">
+            <i class="fas fa-trophy text-yellow-500 mr-3"></i>
+            Leaderboard
+        </h1>
+        <p class="text-xl text-gray-600">Top performers across all quiz categories</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-gradient-to-r from-yellow-400 to-orange-500 px-6 py-4">
+            <h2 class="text-2xl font-bold text-white text-center">🏆 Hall of Fame 🏆</h2>
+        </div>
+        
+        <div class="p-6">
+            {% if top_sessions %}
+                <div class="space-y-4">
+                    {% for session in top_sessions %}
+                    <div class="flex items-center justify-between p-4 rounded-lg border-2 
+                        {% if forloop.counter == 1 %}border-yellow-300 bg-yellow-50
+                        {% elif forloop.counter == 2 %}border-gray-300 bg-gray-50
+                        {% elif forloop.counter == 3 %}border-orange-300 bg-orange-50
+                        {% else %}border-gray-200 bg-white{% endif %} 
+                        hover:shadow-md transition-all duration-200">
+                        
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg
+                                {% if forloop.counter == 1 %}bg-yellow-500 text-white
+                                {% elif forloop.counter == 2 %}bg-gray-400 text-white
+                                {% elif forloop.counter == 3 %}bg-orange-500 text-white
+                                {% else %}bg-gray-200 text-gray-600{% endif %}">
+                                {% if forloop.counter <= 3 %}
+                                    {% if forloop.counter == 1 %}🥇
+                                    {% elif forloop.counter == 2 %}🥈
+                                    {% else %}🥉{% endif %}
+                                {% else %}
+                                    {{ forloop.counter }}
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <div class="font-semibold text-gray-900">
+                                    {% if session.user %}
+                                        {{ session.user.username }}
+                                    {% else %}
+                                        Anonymous Player
+                                    {% endif %}
+                                </div>
+                                <div class="text-sm text-gray-600 flex items-center space-x-2">
+                                    {% if session.category %}
+                                        <span>{{ session.category.icon }} {{ session.category.name }}</span>
+                                    {% else %}
+                                        <span>🎯 Mixed Quiz</span>
+                                    {% endif %}
+                                    <span>•</span>
+                                    <span>{{ session.started_at|date:"M d, Y" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-right">
+                            <div class="text-2xl font-bold 
+                                {% if session.get_percentage >= 90 %}text-green-600
+                                {% elif session.get_percentage >= 80 %}text-blue-600
+                                {% elif session.get_percentage >= 70 %}text-yellow-600
+                                {% else %}text-gray-600{% endif %}">
+                                {{ session.get_percentage }}%
+                            </div>
+                            <div class="text-sm text-gray-600">
+                                {{ session.score }}/{{ session.total_questions }} correct
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <i class="fas fa-trophy text-gray-300 text-6xl mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-600 mb-2">No scores yet!</h3>
+                    <p class="text-gray-500 mb-6">Be the first to complete a quiz and claim the top spot!</p>
+                    <a href="{% url 'quiz:home' %}" 
+                       class="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors font-semibold">
+                        Take Your First Quiz
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-users text-blue-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Active Players</h3>
+            <p class="text-3xl font-bold text-blue-600">{{ top_sessions|length }}</p>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-chart-line text-green-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Highest Score</h3>
+            <p class="text-3xl font-bold text-green-600">
+                {% if top_sessions %}{{ top_sessions.0.get_percentage }}%{% else %}0%{% endif %}
+            </p>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-medal text-purple-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Perfect Scores</h3>
+            <p class="text-3xl font-bold text-purple-600">
+                {% for session in top_sessions %}{% if session.get_percentage == 100 %}{% if forloop.first %}1{% else %}{{ forloop.counter }}{% endif %}{% endif %}{% empty %}0{% endfor %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="text-center mt-12">
+        <div class="bg-gradient-to-r from-primary-500 to-purple-600 rounded-2xl p-8 text-white">
+            <h3 class="text-2xl font-bold mb-4">Ready to Join the Leaderboard?</h3>
+            <p class="text-primary-100 mb-6">Test your knowledge and see how you rank against other players!</p>
+            <a href="{% url 'quiz:home' %}" 
+               class="bg-blue-900 text-primary-600 font-bold py-3 px-8 rounded-xl hover:bg-primary-50 transition-colors transform hover:scale-105">
+                Start Quiz Now
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
