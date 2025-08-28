@@ -1,0 +1,45 @@
+{% load category_tags %}
+
+<li class="ml-4">
+  <div class="flex items-center space-x-2">
+    {% if category.subcategories.all %}
+      <!-- Toggle button -->
+      <button 
+        @click="active === {{ id }} ? active = null : active = {{ id }}" 
+        class="text-gray-500 hover:text-gray-800"
+      >
+        <!-- Closed state -->
+        <svg x-show="active !== {{ id }}" xmlns="http://www.w3.org/2000/svg" 
+             class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5l7 7-7 7" />
+        </svg>
+        <!-- Open state -->
+        <svg x-show="active === {{ id }}" xmlns="http://www.w3.org/2000/svg" 
+             class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+    {% endif %}
+
+    <!-- Category name -->
+    <a href="{% url 'quiz:start_quiz' category.id %}"
+       class="font-medium {{ category.color_class }} hover:underline">
+      {{ category.icon }} {{ category.name }}
+    </a>
+    <span class="text-xs text-gray-400">({{ category.get_question_count }})</span>
+  </div>
+
+  <!-- Subcategories -->
+  {% if category.subcategories.all %}
+    <ul x-data="{ active: null }" 
+        x-show="active === {{ id }}" 
+        x-transition 
+        class="ml-6 mt-1 space-y-1 border-l border-gray-300 pl-3">
+      {% for sub in category.subcategories.all %}
+        {% render_category sub forloop.counter %}
+      {% endfor %}
+    </ul>
+  {% endif %}
+</li>

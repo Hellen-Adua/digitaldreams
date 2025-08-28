@@ -14,4 +14,5 @@ urlpatterns = [
     path('api/question-details/<int:question_id>/', views.get_question_details, name='get_question_details'),
     path('leaderboard/', views.leaderboard, name='leaderboard'),
     path('user-stats/', views.user_stats, name='user_stats'),
+    path('categories/', views.categories_view, name='categories'),
 ]

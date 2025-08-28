@@ -33,6 +33,17 @@ def home(request):
     }
     return render(request, 'quiz/home.html', context)
 
+
+def category_list(request):
+    categories = Category.objects.filter(parent__isnull=True).prefetch_related("subcategories")
+    return render(request, "quiz/categories.html", {"categories": categories})
+
+def categories_view(request):
+    categories = Category.objects.all()
+    return render(request, "quiz/categories.html", {"categories": categories})
+
+
+
 def start_quiz(request, category_id):
     """Start a category-specific quiz"""
     category = get_object_or_404(Category, id=category_id)

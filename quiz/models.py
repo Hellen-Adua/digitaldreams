@@ -5,22 +5,37 @@ from django.db import models
 from django.contrib.auth.models import User
 import json
 
+
 class Category(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)  # ❌ removed unique=True
     description = models.TextField(blank=True)
     icon = models.CharField(max_length=50, default='📚')
     color_class = models.CharField(max_length=50, default='bg-blue-500')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
+    # new field for nesting
+    parent = models.ForeignKey(
+        "self",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="subcategories"
+    )
+
     class Meta:
         verbose_name_plural = "Categories"
         ordering = ['name']
-    
+        unique_together = ('parent', 'name')  # ✅ enforce per parent uniqueness
+
     def __str__(self):
         return self.name
-    
+
     def get_question_count(self):
         return self.questions.count()
+
+    def has_children(self):
+        return self.subcategories.exists()
+
 
 class Question(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='questions')
