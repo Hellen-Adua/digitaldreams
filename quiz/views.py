@@ -12,6 +12,11 @@ import json
 import random
 from datetime import timedelta
 
+
+from utils import build_category_tree
+import os
+
+
 from .models import Category, Question, QuizSession, QuizQuestion, UserAnswer
 
 def home(request):
@@ -38,9 +43,18 @@ def category_list(request):
     categories = Category.objects.filter(parent__isnull=True).prefetch_related("subcategories")
     return render(request, "quiz/categories.html", {"categories": categories})
 
+# def categories_view(request):
+#     categories = Category.objects.all()
+#     return render(request, "quiz/categories.html", {"categories": categories})
+
 def categories_view(request):
-    categories = Category.objects.all()
-    return render(request, "quiz/categories.html", {"categories": categories})
+    csv_path ="quiz_data.csv"
+    category_tree = build_category_tree(csv_path)
+        # convert nested defaultdicts → dicts
+    import json
+    category_tree = json.loads(json.dumps(category_tree))
+    print(category_tree)
+    return render(request, "quiz/categories.html", {"category_tree": category_tree})
 
 
 

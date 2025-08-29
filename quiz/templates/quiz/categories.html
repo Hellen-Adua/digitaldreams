@@ -2,88 +2,21 @@
 
 {% load category_tags %}
 
-{% block content %}
-<div class="max-w-3xl mx-auto bg-white shadow rounded-xl p-6">
-  <h1 class="text-2xl font-bold mb-4">Quiz Categories</h1>
+{%load static%}
 
-  <!-- Collapse/Expand All toggle -->
-  <div class="flex justify-end mb-4">
-    <button id="toggleAll"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700">
-      Collapse All
-    </button>
-  </div>
+{%block content%}
 
-  <!-- Category list -->
+
+<div class="p-6 bg-gray-50">
+
+  <h2 class="text-xl font-bold mb-4">Categories</h2>
+
   <ul class="space-y-2">
-    {% for category in categories %}
-      {% render_category category forloop.counter %}
+    {% for name, children in category_tree.items %}
+      {% include "categories/category_node.html" with name=name children=children level=0 %}
     {% endfor %}
   </ul>
-</div>
 
-<!-- Accordion button template (inside render_category tag output) -->
-{# Example structure: ensure your tag renders this format #}
-<button 
-  data-accordion-toggle="accordion-{{ category.id }}"
-  class="w-full flex justify-between items-center px-4 py-2 text-left font-medium text-gray-800 hover:bg-gray-100"
->
-  {{ category.icon }} {{ category.name }}
-  <svg class="w-5 h-5 transition-transform transform duration-200">
-    <path fill="currentColor" d="M5 9l7 7 7-7" />
-  </svg>
-</button>
-
-<!-- Collapsible panel -->
-<div id="accordion-{{ category.id }}" class="ml-6 hidden">
-  {% for child in category.children.all %}
-    {% render_category child forloop.counter %}
-  {% endfor %}
 </div>
 
 {%endblock%}
-
-{% block scripts %}
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-  const toggleAllBtn = document.getElementById("toggleAll");
-  const toggleButtons = document.querySelectorAll("[data-accordion-toggle]");
-
-  let allCollapsed = false; // initial state: expanded
-
-  toggleAllBtn.addEventListener("click", () => {
-    toggleButtons.forEach(btn => {
-      const targetId = btn.getAttribute("data-accordion-toggle");
-      const target = document.getElementById(targetId);
-      const icon = btn.querySelector("svg");
-
-      if (!allCollapsed) {
-        // Collapse all
-        target.classList.add("hidden");
-        icon.classList.remove("rotate-180");
-      } else {
-        // Expand all
-        target.classList.remove("hidden");
-        icon.classList.add("rotate-180");
-      }
-    });
-
-    // Update state + button text
-    allCollapsed = !allCollapsed;
-    toggleAllBtn.textContent = allCollapsed ? "Expand All" : "Collapse All";
-  });
-
-  // Individual toggle handling
-  toggleButtons.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.getAttribute("data-accordion-toggle");
-      const target = document.getElementById(targetId);
-      const icon = btn.querySelector("svg");
-
-      target.classList.toggle("hidden");
-      icon.classList.toggle("rotate-180");
-    });
-  });
-});
-</script>
-{% endblock %}
